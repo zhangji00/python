@@ -1,0 +1,10 @@
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import GamesAutoPlay as gp
+class gamemap():
+	def __init__():
+		self.fig,self.ax=plt.subplots
+		self.ani=animation.FuncAnimation(self.fig,self.update)
+	def update():
+		gp.Game.getmypos()
+		gp.Game.getgamemap()
