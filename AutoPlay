@@ -1,0 +1,112 @@
+import socket
+import string
+from ast import literal_eval 
+import time
+
+class Tcp_client(object):
+	def __init__(self):
+		address = ('192.168.1.105', 9999)
+		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.s.connect(address)
+		self.s.settimeout(0.1)
+		print self.s.recv(512)
+    
+	def send(self,data):
+		self.s.send(data)
+		while True:
+			try: 
+				rec = self.s.recv(512)
+	   		except Exception,e:
+	   			break
+	   		if not rec:
+	   			break
+	def recv(self):
+		self.s.settimeout(1)
+		while True:
+			try: 
+				rec = self.s.recv(512)
+	   		except Exception,e:
+	   			break
+	   		print rec
+	   		if not rec:
+	   			break
+
+	def sendandrecv(self,data):		
+		self.s.send(data)
+		str_recv=''
+		while True:
+			try: 
+				rec = self.s.recv(512)
+	   		except Exception,e:
+	   			break
+	   		if not rec:
+	   			break
+	   		str_recv+=rec
+		return str_recv
+
+class Game(object):
+	def __init__(self):
+		self.nc=Tcp_client()
+
+	def login(self,user='',passwords=''):
+		print self.nc.sendandrecv(user)#,'is test'#user name
+		print self.nc.sendandrecv(passwords) #,'is test'#password
+		print self.nc.sendandrecv('help')
+
+	def getmypos(self):	
+		data = self.nc.sendandrecv('map') 
+		data = data.split('\r\n')
+		pos_info=data[0].split(': ')
+		return literal_eval(pos_info[1])
+
+	def getgamemap(self):
+		data = self.nc.sendandrecv('map')#s.recv(512)
+		data =data.split('\r\n')
+		gamemap_info=data[1].split(': ')
+		return literal_eval(gamemap_info[1])
+	
+	def play(self):
+		print'---------------------------begin---------------------'
+		m_i=self.getgamemap()
+		print len(m_i)
+		for i in range(0,len(m_i)):
+			print 'step: ' ,i
+			mypos=self.getmypos()
+			gamemap=self.getgamemap()
+			print mypos
+			print gamemap
+			y=mypos[0]-gamemap[0][0]
+			print y
+			if y>0:
+				for n in range(0,y):
+					self.nc.send('down\r\n')
+					time.sleep(0.1)
+					print 'down'
+			elif y<0:
+				for n in range(0,abs(y)):
+					self.nc.send('up\r\n')
+					time.sleep(0.1)
+					print 'up'
+			x=mypos[1]-gamemap[0][1]
+			print x
+			if x>0:
+				for n in range(0,x):
+					self.nc.send('left\r\n')
+					time.sleep(0.1)
+					print 'left'
+			elif x<0:
+				for n in range(0,abs(x)):
+					self.nc.send('rigth\r\n')
+					time.sleep(0.1)
+					print 'rigth'
+			print 'collect'
+			print self.nc.sendandrecv('collect\r\n')
+			time.sleep(0.1)			
+		#self.nc.recv()
+gm=Game()
+gm.login(user='test',passwords='test')
+gm.play()
+print 'you see it'
+#s.close()
+
+
