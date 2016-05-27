@@ -1,0 +1,301 @@
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
+
+def update_line(num, data, line):
+    line.set_data(data[..., :num])
+    return line,
+
+fig1 = plt.figure()
+
+data = np.random.rand(2, 25)
+l, = plt.plot([], [], 'r-')
+plt.xlim(0, 1)
+plt.ylim(0, 1)
+plt.xlabel('x')
+plt.title('test')
+line_ani = animation.FuncAnimation(fig1, update_line, 25, fargs=(data, l),
+                                   interval=50, blit=True)
+#line_ani.save('lines.mp4')
+
+fig2 = plt.figure()
+
+x = np.arange(-9, 10)
+y = np.arange(-9, 10).reshape(-1, 1)
+base = np.hypot(x, y)
+ims = []
+for add in np.arange(15):
+    ims.append((plt.pcolor(x, y, base + add, norm=plt.Normalize(0, 30)),))
+
+im_ani = animation.ArtistAnimation(fig2, ims, interval=50, repeat_delay=3000,
+                                   blit=True)
+#im_ani.save('im.mp4', metadata={'artist':'Guido'})
+
+plt.show()
+"""
+"""
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+
+vls = np.linspace(0,2*2*np.pi,100)
+
+fig=plt.figure()
+img, = plt.plot(np.sin(vls))
+ax = plt.axes()
+ax.set_xlim([0,2*2*np.pi])
+#ttl = ax.set_title('',animated=True)
+ttl = ax.text(.5, 1.005, '', transform = ax.transAxes)
+
+def init():
+    ttl.set_text('')
+    img.set_data([0],[0])
+    return img, ttl
+def func(n):
+    ttl.set_text(str(n))
+    img.set_data(vls,np.sin(vls+.02*n*2*np.pi))
+    return img, ttl
+
+ani = animation.FuncAnimation(fig,func,init_func=init,frames=50,interval=30,blit=True)
+
+plt.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+def update_line(num, data, line):
+    line.set_data(data[..., :num])
+    return line,
+
+fig1 = plt.figure()
+
+data = np.random.rand(2, 25)
+l, = plt.plot([], [], 'r-')
+plt.xlim(0, 10)
+plt.ylim(0, 10)
+plt.xlabel('x')
+plt.title('test')
+line_ani = animation.FuncAnimation(fig1, update_line, 25, fargs=(data, l),
+                                   interval=50, blit=True)
+plt.show()   
+"""
+"""
+import numpy as np  
+from matplotlib import pyplot as plt  
+from matplotlib import animation  
+  
+# First set up the figure, the axis, and the plot element we want to animate  
+fig = plt.figure()  
+ax = plt.axes(xlim=(0, 2*np.pi), ylim=(-1, 1))  
+point, = ax.plot([], [])  
+  
+# initialization function: plot the background of each frame  
+def init():  
+    point.set_data([], [])  
+    return point,  
+  
+# animation function.  This is called sequentially  
+# note: i is framenumber  
+def animate(i): 
+    while True: 
+        x = np.linspace(0, 2*np.pi, 100)  
+        y = np.sin(x+i*0.01)  
+        point.set_data(x, y)  
+        return point,
+  
+# call the animator.  blit=True means only re-draw the parts that have changed.  
+anim = animation.FuncAnimation(fig, animate, init_func=init,  
+                               frames=2000, interval=1, blit=True)  
+  
+#anim.save('basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])  
+  
+plt.show()
+"""      
+"""                         
+import numpy as np  
+import matplotlib.pyplot as plt  
+import matplotlib.animation as animation  
+  
+
+def data_gen():  
+    t = data_gen.t  
+    cnt = 0  
+    while cnt < 1000:  
+        cnt+=1  
+        t += 0.05  
+        yield t, np.sin(2*np.pi*t) * np.exp(-t/10.)  
+data_gen.t = 0  
+  
+
+fig, ax = plt.subplots()  
+line, = ax.plot([], [], lw=2)  
+ax.set_ylim(-1.1, 1.1)  
+ax.set_xlim(0, 5)  
+ax.grid()  
+xdata, ydata = [], []  
+  
+
+def run(data):  
+    # update the data  
+    t,y = data  
+    xdata.append(t)  
+    ydata.append(y)  
+    xmin, xmax = ax.get_xlim()  
+  
+    if t >= xmax:  
+        ax.set_xlim(xmin, 2*xmax)  
+        ax.figure.canvas.draw()  
+    line.set_data(xdata, ydata)  
+  
+    return line,  
+      
+
+ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=10,  
+    repeat=False)  
+plt.show()   
+"""
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+import time
+
+class AnimatedScatter(object):
+    """An animated scatter plot using matplotlib.animations.FuncAnimation."""
+    def __init__(self):
+        self.numpoints = 200
+        self.stream = self.data_stream()
+
+        # Setup the figure and axes...
+        self.fig, self.ax = plt.subplots()
+        # Then setup FuncAnimation.
+        self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
+                                           init_func=self.setup_plot, blit=True)
+
+    def setup_plot(self):
+        """Initial drawing of the scatter plot."""
+        x, y, s, c = self.stream.next() #next(self.stream) 
+        self.scat = self.ax.scatter(x, y, c=c, s=s, animated=True)
+        self.ax.axis([0, 1, 0, 1])
+
+        # For FuncAnimation's sake, we need to return the artist we'll be using
+        # Note that it expects a sequence of artists, thus the trailing comma.
+        return self.scat,
+
+    def data_stream(self):
+        """Generate a random walk (brownian motion). Data is scaled to produce
+        a soft "flickering" effect."""
+        data = np.random.random((4,self.numpoints))
+        x, y = data[:2]
+        s, c = data[2:]
+        #x-=x*2       
+        for n in range(0,len(x)/2):
+            x[n]-=x[n]*2 
+            x[len(x)-n-1]+=1-x[len(x)-n-1]/2 
+        while True:     
+            for n in range(0,len(x)/2):
+                x[n]+=np.random.random()*0.0002  #half of the list plus an random
+                x[len(x)-n-1]-=np.random.random()*0.0002 #another parts plus an random too
+            #x+=np.random.random(self.numpoints)*0.0002
+            y+=np.sin(x*100)*np.random.random(self.numpoints)*0.001
+            #time.sleep(0.1)
+            #xy += 0.03 * (np.random.random((2, self.numpoints)) -0.3)
+            s += 0.02 * (np.random.random(self.numpoints) -0.5)
+            c += 0.05 * (np.random.random(self.numpoints) - 0.5)
+            yield data
+
+    def update(self, i):
+        """Update the scatter plot."""
+        #there is no uniform design
+        #the design i see, seems to want to
+        #use 2 list, a list of x and a list of
+        #y
+        data = self.stream.next()
+        #print(data)
+        #method to get the answers
+        # Set x and y data...
+        #why dont plot integers?
+        #scientific method
+        res=[]
+        for x1 in range(0,len(data[0])):
+            res.append([data[0][x1],data[1][x1]])
+            #np.concatenate([data[0][x1],data[1][x1]],axis=0)
+        self.scat.set_offsets(res)#data[:2]
+        # Set sizes...
+        self.scat._sizes = 300 * abs(data[2])**1.5 + 100
+        # Set colors..
+        self.scat.set_array(data[3])
+        
+        # We need to return the updated artist for FuncAnimation to draw..
+        # Note that it expects a sequence of artists, thus the trailing comma.
+        return self.scat,
+
+    def show(self):
+        plt.show()
+
+if __name__ == '__main__':
+    a = AnimatedScatter()
+    a.show()  
+"""
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+
+class AnimatedScatter(object):
+   
+    def __init__(self, numpoints=50):
+        self.numpoints = numpoints
+        self.stream = self.data_stream()
+
+        # Setup the figure and axes...
+        self.fig, self.ax = plt.subplots()
+        # Then setup FuncAnimation.
+        self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
+                                           init_func=self.setup_plot, blit=True)
+
+    def setup_plot(self):
+       
+        x, y, s, c = next(self.stream)
+        self.scat = self.ax.scatter(x, y, c=c, s=s, animated=True)
+        self.ax.axis([-10, 10, -10, 10])
+
+        # For FuncAnimation's sake, we need to return the artist we'll be using
+        # Note that it expects a sequence of artists, thus the trailing comma.
+        return self.scat,
+
+    def data_stream(self):
+        
+        data = np.random.random((4, self.numpoints))
+        xy = data[:2, :]
+        s, c = data[2:, :]
+        xy -= 0.5
+        xy *= 10
+        while True:
+            xy += 0.03 * (np.random.random((2, self.numpoints)) - 0.5)
+            s += 0.05 * (np.random.random(self.numpoints) - 0.5)
+            c += 0.02 * (np.random.random(self.numpoints) - 0.5)
+            yield data
+
+    def update(self, i):
+       
+        data = next(self.stream)
+
+        # Set x and y data...
+        self.scat.set_offsets(data[:2, :])
+        # Set sizes...
+        self.scat._sizes = 300 * abs(data[2])**1.5 + 100
+        # Set colors..
+        self.scat.set_array(data[3])
+
+        # We need to return the updated artist for FuncAnimation to draw..
+        # Note that it expects a sequence of artists, thus the trailing comma.
+        return self.scat,
+
+    def show(self):
+        plt.show()
+
+if __name__ == '__main__':
+    a = AnimatedScatter()
+    a.show()
+"""    
