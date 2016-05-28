@@ -1,0 +1,83 @@
+import SocketServer
+import random
+
+random.seed()
+
+SocketServer.ThreadingTCPServer.allow_reuse_address = True
+
+class MyTCPHandler(SocketServer.BaseRequestHandler):
+    """
+    The RequestHandler class for our server.
+
+    It is instantiated once per connection to the server, and must
+    override the handle() method to implement communication to the
+    client.
+    """
+
+    def handle(self):
+        # self.request is the TCP socket connected to the client
+        self.request.sendall("user:")
+        t_user = self.request.recv(1024).strip()
+        self.request.sendall("pass:")
+        t_pass = self.request.recv(1024).strip()
+        if t_user == "test" and t_pass == "test":
+            self.request.sendall("login ok")
+            pos = [random.randint(0,10), random.randint(0,10)]
+            objects = [[random.randint(0,10), random.randint(0,10)] for a in range(0,random.randint(5,7))]
+            while True:
+                self.request.sendall("> ")
+                data = self.request.recv(1024).strip()
+                if not data:
+                    break
+                print "{} wrote:".format(self.client_address[0])
+                print data
+                if data == "map":
+                    self.request.sendall("yourpos: "+repr(pos)+"\r\n")
+                    self.request.sendall("objects: "+repr(objects)+"\r\n")
+                    print 
+                    continue
+                if data == "up":
+                    pos[0] = pos[0] + 1
+                    continue
+                    #move +1 0
+                if data == "down":
+                    pos[0] = pos[0] - 1
+                    continue
+                if data == "left":
+                    pos[1] = pos[1] - 1
+                    continue
+                if data == "rigth":
+                    pos[1] = pos[1] + 1
+                    continue
+                if data == "collect":
+                    k = [a for a in objects if a[0] == pos[0] and a[1] == pos[1]]
+                    if len(k) == 0:
+                        self.request.sendall("tryed to collect on an empty spot, you lose\r\n")
+                        break
+                    objects = [a for a in objects if a[0] != pos[0] or a[1] != pos[1]]
+                    self.request.sendall("collected {} items, remaining {}\r\n".format(len(k), len(objects)))
+                    if len(objects) == 0:
+                        self.request.sendall("game over\r\n")
+                        break
+                    continue
+                if data == "help":
+                    self.request.sendall("avaliable commands:\r\n")
+                    self.request.sendall("- up, down, left, rigth\r\n")
+                    self.request.sendall("- collect\r\n")
+                    self.request.sendall("- map\r\n")
+                    continue
+                self.request.sendall("unrecognized command, type help\r\n")
+                # just send back the same data, but upper-cased
+                #self.request.sendall(self.data.upper())
+        else:
+            self.request.sendall("wrong login credentials")
+
+if __name__ == "__main__":
+    HOST, PORT = "0.0.0.0", 9999
+
+    # Create the server, binding to localhost on port 9999
+    server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
+
+    # Activate the server; this will keep running until you
+    # interrupt the program with Ctrl-C
+    server.serve_forever()
